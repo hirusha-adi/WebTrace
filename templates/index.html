@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Cases · WebTrace{% endblock %}
+
+{% block content %}
+<section class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight">Cases</h1>
+    <p class="mt-1 text-sm text-base-content/70">{{ cases|length }} case folder{{ '' if cases|length == 1 else 's' }} found.</p>
+  </div>
+</section>
+
+{% if cases %}
+  <div class="card rounded-md border border-base-300 bg-base-100 shadow-none">
+    <div class="overflow-x-auto">
+    <table class="table table-sm">
+      <thead>
+        <tr>
+          <th>Case ID</th>
+          <th>Captures</th>
+          <th>Latest Capture</th>
+          <th>Latest URL</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for case in cases %}
+          <tr class="hover:bg-base-200">
+            <td class="font-medium">{{ case.case_id }}</td>
+            <td>{{ case.capture_count }}</td>
+            <td class="font-mono text-xs">{{ case.latest_capture or 'None' }}</td>
+            <td class="max-w-xl truncate">{{ case.latest_url }}</td>
+            <td class="text-right">
+              <a class="btn btn-outline btn-xs" href="{{ url_for('case_detail', case_id=case.case_id) }}">Open</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+{% else %}
+  <div class="alert bg-base-100 text-base-content">
+    <span>No cases were found in <span class="font-mono">{{ cases_root }}</span>.</span>
+  </div>
+{% endif %}
+{% endblock %}

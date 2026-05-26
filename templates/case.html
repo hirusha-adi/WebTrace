@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}{{ case_id }} · WebTrace{% endblock %}
+
+{% block content %}
+<div class="breadcrumbs mb-5 text-sm">
+  <ul>
+    <li><a href="{{ url_for('index') }}">Cases</a></li>
+    <li>{{ case_id }}</li>
+  </ul>
+</div>
+
+<section class="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 class="text-2xl font-semibold tracking-tight">{{ case_id }}</h1>
+    <p class="mt-1 text-sm text-base-content/70">{{ captures|length }} capture folder{{ '' if captures|length == 1 else 's' }}.</p>
+  </div>
+</section>
+
+<div class="card rounded-md border border-base-300 bg-base-100 shadow-none">
+  <div class="overflow-x-auto">
+  <table class="table table-sm">
+    <thead>
+      <tr>
+        <th>Capture</th>
+        <th>Integrity</th>
+        <th>Page</th>
+        <th>Operator</th>
+        <th>Files</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for capture in captures %}
+        {% set ok = capture.verification.status == 'pass' %}
+        <tr class="hover:bg-base-200">
+          <td>
+            <div class="font-mono text-xs font-medium">{{ capture.capture_id }}</div>
+            <div class="mt-1 text-xs text-base-content/60">{{ capture.start }}</div>
+          </td>
+          <td>
+            <span class="badge badge-sm {{ 'badge-success' if ok else 'badge-error' }}">
+              {{ 'PASS' if ok else 'CHECK' }}
+            </span>
+            <div class="mt-1 text-xs text-base-content/60">{{ capture.verification.passed }}/{{ capture.verification.total }} passed</div>
+          </td>
+          <td class="max-w-xl">
+            <div class="truncate font-medium">{{ capture.title or 'Untitled page' }}</div>
+            <div class="truncate text-xs text-base-content/60">{{ capture.final_url or capture.original_url }}</div>
+          </td>
+          <td>{{ capture.operator }}</td>
+          <td>{{ capture.file_count }}</td>
+          <td class="text-right">
+            <a class="btn btn-outline btn-xs" href="{{ url_for('capture_detail', case_id=case_id, capture_id=capture.capture_id) }}">Browse</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

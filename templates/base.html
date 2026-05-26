@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}WebTrace{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+      pre { tab-size: 2; }
+      .markdown-body { color: #27272a; font-size: 0.875rem; line-height: 1.65; }
+      .markdown-body h1 { margin: 0 0 1rem; font-size: 1.5rem; line-height: 2rem; font-weight: 700; color: #09090b; letter-spacing: 0; }
+      .markdown-body h2 { margin: 1.5rem 0 0.5rem; border-bottom: 1px solid #e4e4e7; padding-bottom: 0.35rem; font-size: 1rem; line-height: 1.5rem; font-weight: 700; color: #18181b; letter-spacing: 0; }
+      .markdown-body h3 { margin: 1rem 0 0.35rem; font-size: 0.95rem; font-weight: 700; color: #27272a; }
+      .markdown-body p { margin: 0.5rem 0; }
+      .markdown-body ul, .markdown-body ol { margin: 0.5rem 0 0.75rem 1.25rem; }
+      .markdown-body ul { list-style: disc; }
+      .markdown-body ol { list-style: decimal; }
+      .markdown-body li { margin: 0.2rem 0; }
+      .markdown-body a { color: #075985; text-decoration: underline; text-underline-offset: 2px; }
+      .markdown-body code { border: 1px solid #e4e4e7; background: #f4f4f5; padding: 0.1rem 0.3rem; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 0.78rem; color: #18181b; }
+      .markdown-body pre { margin: 0.75rem 0; overflow: auto; background: #18181b; padding: 0.85rem; color: #fafafa; }
+      .markdown-body pre code { border: 0; background: transparent; padding: 0; color: inherit; }
+      .markdown-body table { margin: 0.75rem 0; width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+      .markdown-body th, .markdown-body td { border: 1px solid #e4e4e7; padding: 0.45rem 0.55rem; text-align: left; vertical-align: top; }
+      .markdown-body th { background: #f4f4f5; font-weight: 700; color: #18181b; }
+      .markdown-body blockquote { margin: 0.75rem 0; border-left: 3px solid #a1a1aa; padding-left: 0.8rem; color: #52525b; }
+    </style>
+  </head>
+  <body class="flex min-h-screen flex-col bg-base-200 text-base-content" data-theme="light">
+    <header class="navbar border-b border-base-300 bg-base-100">
+      <div class="mx-auto flex w-full max-w-7xl items-center justify-center px-5">
+        <a href="{{ url_for('index') }}" class="text-xl font-semibold tracking-tight">WebTrace</a>
+      </div>
+    </header>
+
+    <main class="mx-auto w-full max-w-7xl flex-1 px-5 py-6">
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="border-t border-base-300 bg-base-100">
+      <div class="mx-auto max-w-7xl px-5 py-3 text-center text-xs text-base-content/60">
+        Cases root: <span class="font-mono text-base-content/70">{{ cases_root }}</span>
+      </div>
+    </footer>
+
+    <script>
+      function showTab(name) {
+        $('.tab-panel').addClass('hidden');
+        $('[data-panel="' + name + '"]').removeClass('hidden');
+        $('.tab-button').removeClass('tab-active');
+        $('[data-tab="' + name + '"]').addClass('tab-active');
+      }
+
+      $(function () {
+        $('.tab-button').on('click', function () {
+          showTab($(this).data('tab'));
+        });
+
+        $('[data-file-search]').on('input', function () {
+          const query = $(this).val().toLowerCase();
+          $('[data-file-row]').each(function () {
+            const haystack = $(this).data('file-row').toLowerCase();
+            $(this).toggle(haystack.indexOf(query) !== -1);
+          });
+        });
+
+        $('[data-preview-url]').on('click', function () {
+          const url = $(this).data('preview-url');
+          $('#preview-title').text($(this).data('preview-name'));
+          $('#preview-body').html('<div class="p-4 text-sm text-base-content/60">Loading preview...</div>');
+          $.getJSON(url, function (data) {
+            let body = '';
+            if (data.mode === 'image') {
+              body = '<div class="bg-base-200 p-4"><img class="max-h-[720px] w-auto max-w-full border border-base-300 bg-base-100" src="' + data.url + '" alt=""></div>';
+            } else if (data.mode === 'pdf') {
+              body = '<iframe class="h-[720px] w-full border-0" src="' + data.url + '"></iframe>';
+            } else if (data.mode === 'text') {
+              body = '<pre class="max-h-[720px] overflow-auto whitespace-pre-wrap break-words bg-zinc-950 p-4 text-xs leading-5 text-zinc-100"></pre>';
+            } else {
+              body = '<div class="p-4 text-sm text-base-content/70">' + data.message + '</div>';
+            }
+            $('#preview-body').html(body);
+            if (data.mode === 'text') {
+              $('#preview-body pre').text(data.content);
+            }
+            $('#preview-download').attr('href', data.download_url).removeClass('hidden');
+          }).fail(function () {
+            $('#preview-body').html('<div class="alert alert-error m-4">Preview failed.</div>');
+          });
+        });
+      });
+    </script>
+  </body>
+</html>

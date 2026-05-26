@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}{{ case_id }} / {{ capture_id }} · WebTrace{% endblock %}
+
+{% block content %}
+<div class="breadcrumbs mb-5 text-sm">
+  <ul>
+    <li><a href="{{ url_for('index') }}">Cases</a></li>
+    <li><a href="{{ url_for('case_detail', case_id=case_id) }}">{{ case_id }}</a></li>
+    <li>{{ capture_id }}</li>
+  </ul>
+</div>
+
+<section class="card mb-6 rounded-md border border-base-300 bg-base-100 shadow-none">
+  <div class="card-body p-5">
+    <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-2">
+          <h1 class="max-w-full break-words text-2xl font-semibold tracking-tight">{{ capture.title or 'Untitled page' }}</h1>
+          <!-- <span class="badge badge-outline">{{ case_id }}</span> -->
+        </div>
+        <a class="mt-1 block break-all text-sm text-base-content/70 hover:underline" href="{{ capture.final_url or capture.original_url }}" target="_blank" rel="noreferrer">
+          {{ capture.final_url or capture.original_url }}
+        </a>
+
+        <dl class="mt-4 grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
+          <div class="sm:col-span-2 xl:col-span-4">
+            <dt class="text-xs font-semibold uppercase tracking-wide text-base-content/60">Evidence ID</dt>
+            <dd class="mt-1 rounded-md border border-base-300 bg-base-200 px-3 py-2 font-mono text-xs break-all text-base-content">
+              {{ capture.evidence_id }}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-xs font-semibold uppercase tracking-wide text-base-content/60">Operator</dt>
+            <dd class="mt-1 break-words text-base-content">{{ capture.operator }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs font-semibold uppercase tracking-wide text-base-content/60">Capture Start UTC</dt>
+            <dd class="mt-1 font-mono text-xs text-base-content">{{ capture.start }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs font-semibold uppercase tracking-wide text-base-content/60">Capture End UTC</dt>
+            <dd class="mt-1 font-mono text-xs text-base-content">{{ capture.end }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs font-semibold uppercase tracking-wide text-base-content/60">Capture Folder</dt>
+            <dd class="mt-1 font-mono text-xs break-all text-base-content">{{ capture_id }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      {% set ok = verification.status == 'pass' %}
+      <div class="rounded-md border border-base-300 bg-base-200 p-4">
+        <div>
+          <div class="text-xs font-semibold uppercase tracking-wide text-base-content/60">Integrity</div>
+          <div class="mt-1 text-2xl font-semibold tracking-tight {{ 'text-success' if ok else 'text-error' }}">
+            {{ 'PASS' if ok else 'CHECK' }}
+          </div>
+        </div>
+        <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <div class="text-xs text-base-content/60">Checks Passed</div>
+            <div class="font-mono">{{ verification.passed }}/{{ verification.total }}</div>
+          </div>
+          <div class="col-span-2">
+            <div class="text-xs text-base-content/60">Signature</div>
+            <div class="mt-1 font-mono text-xs break-all">{{ verification.signature_status }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<nav class="tabs tabs-border mb-5">
+  <button class="tab-button tab tab-active" data-tab="overview">Overview</button>
+  <button class="tab-button tab" data-tab="artifacts">Artifacts</button>
+  <button class="tab-button tab" data-tab="metadata">Metadata</button>
+  <button class="tab-button tab" data-tab="files">Files</button>
+</nav>
+
+<section class="tab-panel" data-panel="overview">
+  <div class="grid gap-5 lg:grid-cols-2">
+    <div class="card rounded-md border border-base-300 bg-base-100 shadow-none">
+      <div class="card-body p-5">
+      <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-base-content/60">Primary Screenshot</h2>
+      {% if artifacts.Visual %}
+        {% for item in artifacts.Visual %}
+          {% if item.relative_path == 'screenshots/full_page.png' %}
+            <button class="block w-full text-left" data-preview-name="{{ item.relative_path }}" data-preview-url="{{ url_for('file_preview', case_id=case_id, capture_id=capture_id, relative_path=item.relative_path) }}">
+              <img class="max-h-[520px] w-auto max-w-full border border-base-300 bg-base-100" src="{{ url_for('artifact', case_id=case_id, capture_id=capture_id, relative_path=item.relative_path) }}" alt="">
+            </button>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+      </div>
+    </div>
+    <div class="card rounded-md border border-base-300 bg-base-100 shadow-none">
+      <div class="card-body p-5">
+      <h2 class="mb-3 text-sm font-semibold uppercase tracking-wide text-base-content/60">Evidence Summary</h2>
+      <div class="markdown-body max-h-[520px] overflow-auto pr-2">{{ reports.summary_html }}</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="tab-panel hidden" data-panel="artifacts">
+  <div class="grid gap-5 lg:grid-cols-3">
+    <div class="lg:col-span-1">
+      {% for group, items in artifacts.items() %}
+        <div class="card mb-4 rounded-md border border-base-300 bg-base-100 shadow-none">
+          <div class="border-b border-base-300 bg-base-200 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-base-content/60">{{ group }}</div>
+          <div class="divide-y divide-base-300">
+            {% for item in items %}
+              <button class="block w-full px-4 py-3 text-left hover:bg-base-200" data-preview-name="{{ item.relative_path }}" data-preview-url="{{ url_for('file_preview', case_id=case_id, capture_id=capture_id, relative_path=item.relative_path) }}">
+                <div class="truncate text-sm font-medium">{{ item.name }}</div>
+                <div class="mt-1 truncate font-mono text-xs text-base-content/60">{{ item.relative_path }}</div>
+              </button>
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="card rounded-md border border-base-300 bg-base-100 shadow-none lg:col-span-2">
+      <div class="flex items-center justify-between border-b border-base-300 bg-base-200 px-4 py-3">
+        <div id="preview-title" class="truncate text-sm font-semibold">Artifact Preview</div>
+        <a id="preview-download" class="btn btn-outline btn-xs hidden" href="#">Download</a>
+      </div>
+      <div id="preview-body" class="min-h-[420px]">
+        <div class="p-4 text-sm text-base-content/60">Select an artifact to preview it.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="tab-panel hidden" data-panel="metadata">
+  <div class="grid gap-5 lg:grid-cols-2">
+    <div class="card rounded-md border border-base-300 bg-base-100 shadow-none">
+      <div class="border-b border-base-300 bg-base-200 px-4 py-3 text-sm font-semibold">Capture Metadata</div>
+      <pre class="max-h-[680px] overflow-auto whitespace-pre-wrap bg-zinc-950 p-4 text-xs leading-5 text-zinc-100">{{ metadata | tojson(indent=2) }}</pre>
+    </div>
+    <div class="card rounded-md border border-base-300 bg-base-100 shadow-none">
+      <div class="border-b border-base-300 bg-base-200 px-4 py-3 text-sm font-semibold">Capture Log</div>
+      <pre class="max-h-[680px] overflow-auto whitespace-pre-wrap bg-zinc-950 p-4 text-xs leading-5 text-zinc-100">{{ reports.log }}</pre>
+    </div>
+  </div>
+</section>
+
+<section class="tab-panel hidden" data-panel="files">
+  <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <input data-file-search class="input input-bordered input-sm w-full sm:max-w-md" placeholder="Search files">
+    <div class="text-sm text-base-content/60">{{ files|length }} file{{ '' if files|length == 1 else 's' }}</div>
+  </div>
+  <div class="card rounded-md border border-base-300 bg-base-100 shadow-none">
+    <div class="overflow-x-auto">
+    <table class="table table-sm">
+      <thead>
+        <tr>
+          <th>Path</th>
+          <th>Size</th>
+          <th>Modified UTC</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in files %}
+          <tr data-file-row="{{ item.relative_path }}" class="hover:bg-base-200">
+            <td class="max-w-3xl font-mono text-xs">{{ item.relative_path }}</td>
+            <td>{{ item.size_display }}</td>
+            <td class="font-mono text-xs text-base-content/60">{{ item.modified_time_utc }}</td>
+            <td class="text-right">
+              <a class="btn btn-outline btn-xs" href="{{ url_for('download', case_id=case_id, capture_id=capture_id, relative_path=item.relative_path) }}">Download</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+{% endblock %}
