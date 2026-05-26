@@ -1,5 +1,7 @@
 # WebTrace
 
+<img width="1102" height="615" alt="image" src="https://github.com/user-attachments/assets/0d148121-fdd8-44ff-85e4-b892895d02a3" />
+
 WebTrace is a Python command-line tool for preserving web pages into a structured evidence package. It captures browser-rendered page artifacts, records metadata, creates SHA-256 manifests, signs the manifest, and includes a read-only Flask viewer for browsing saved cases.
 
 Use WebTrace only for public pages, pages you own, or pages you are authorised to preserve. It is not designed to bypass logins, CAPTCHAs, access controls, private APIs, or rate limits.
